@@ -1,6 +1,6 @@
 fn main() {
-  //  println!("cargo:rustc-link-arg-bins=/ALIGN:16");
-  //  println!("cargo:rustc-link-arg-bins=/FILEALIGN:1");
+    println!("cargo:rustc-link-arg-bins=/ALIGN:16");
+    println!("cargo:rustc-link-arg-bins=/FILEALIGN:1");
     // Merges empty `.rdata` and `.pdata` into .text section saving a few bytes in data
     // directories portion  of PE header.
     /*
@@ -25,6 +25,7 @@ fn main() {
     println!("cargo:rustc-link-arg-bins=/NXCOMPAT");
     println!("cargo:rustc-link-arg-bins=/DYNAMICBASE");
     println!("cargo:rustc-link-arg-bins=/MANIFEST:NO");
+ //   println!("cargo:rustc-link-arg-bins=/LARGEADDRESSAWARE");
     // See: https://github.com/mcountryman/min-sized-rust-windows/pull/7
     println!("cargo:rustc-link-arg-bins=/STUB:stub.exe");
 
