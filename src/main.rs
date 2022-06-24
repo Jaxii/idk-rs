@@ -10,6 +10,9 @@
 
 use core::arch::asm;
 use core::ptr::{null_mut};
+use obfstr::bytes::{keystream, obfuscate};
+use obfstr::obfstr;
+
 mod binds;
 mod utils;
 use binds::*;
@@ -18,7 +21,7 @@ use utils::*;
 fn panic(_: &core::panic::PanicInfo) -> ! {
     loop {}
 }
-// const KERNEL32_DLL: &str = concat!("KERNEL32.DLL", "\0");
+//const KERNEL32_DLL: &str = concat!("KERNEL32.DLL", "\0");
 const USER32_DLL: &str = concat!("user32.dll", "\0");
 const LoadLibraryA_: &str = concat!("LoadLibraryA", "\0");
 const GetProcAddress_: &str = concat!("GetProcAddress", "\0");
@@ -30,31 +33,33 @@ pub type GetProcAddressFn = extern "system" fn(hmodule: PVOID, name: LPCSTR) -> 
 pub type MessageBoxAFn = extern "system" fn(h: PVOID, text: LPCSTR, cation: LPCSTR, t: u32) -> u32;
 //pub type GetComputerNameFn = extern "system" fn(idk: LPSTR, idk2: DWORD) -> u32;
 #[no_mangle]
-pub extern "C" fn main() -> ! {
+pub extern "C" fn main() /* -> ! */ {
     unsafe {
         asm!("mov rcx, 0", "mov rdx, 0",);
     }
-    let KERNEL32_STR: [u16; 13] = [75, 69, 82, 78, 69, 76, 51, 50, 46, 68, 76, 76, 0];
-    let kernel32_ptr = get_module_by_name(KERNEL32_STR.as_ptr());
-    let load_library_ptr = get_func_by_name(kernel32_ptr, LoadLibraryA_.as_ptr());
-    let get_proc = get_func_by_name(kernel32_ptr, GetProcAddress_.as_ptr());
+  //  obfuscate(KERNEL32_STR.as_slice(), &KERNEL32_STR);
+
+    let kernel32_str: &[u16; 13] = obfstr::wide!("KERNEL32.DLL\0");
+    let kernel32_ptr = get_module_by_name(kernel32_str.as_ptr());
+    let load_library_ptr = get_func_by_name(kernel32_ptr, obfstr!(LoadLibraryA_).as_ptr());
+    let get_proc = get_func_by_name(kernel32_ptr, obfstr!(GetProcAddress_).as_ptr());
    // let get_name = get_func_by_name(kernel32_ptr, GetComputerName_.as_ptr());
     let LoadLibraryA: LoadLibraryAFn = unsafe { core::mem::transmute(load_library_ptr) };
 
     unsafe { asm!("and rsp, ~0xf") };
-    let u32_dll = LoadLibraryA(USER32_DLL.as_ptr() as *const i8);
+    let u32_dll = LoadLibraryA(obfstr!(USER32_DLL).as_ptr() as *const i8);
     let GetProcAddress: GetProcAddressFn = unsafe { core::mem::transmute(get_proc) };
-    let message_box_ptr = GetProcAddress(u32_dll, MessageBoxA_.as_ptr() as *const i8);
+    let message_box_ptr = GetProcAddress(u32_dll, obfstr!(MessageBoxA_).as_ptr() as *const i8);
     let MessageBoxA: MessageBoxAFn = unsafe { core::mem::transmute(message_box_ptr) };
  //   let GetComputerName: GetComputerNameFn = unsafe { core::mem::transmute(get_name)};
   //  let name_output = GetComputerName("\0".as_ptr() as *mut i8: LPSTR, 32767);
     MessageBoxA(
         null_mut(),
-        "Message\0".as_ptr() as *const i8,
-        "Title\0".as_ptr() as _,
+        obfstr!("Message\0").as_ptr() as *const i8,
+        obfstr!("Title\0").as_ptr() as _,
         0x20,
     );
-    loop {}
+    // loop {}
 }
 
 fn get_module_by_name(module_name: *const u16) -> PVOID {
